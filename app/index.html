@@ -1,0 +1,109 @@
+<html>
+  <head>
+    <title>API</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <div class="table_responsive">
+        <h1>Article data</h1>
+        <br>
+      </div>
+      <table class="table table_borderd table_striped" id="article_table">
+        <tr>
+          <th>Index</th>
+          <th>Title</th>
+          <th>Description</th>
+        </tr>
+      </table>
+    </div>
+    <form>
+      <div class="form-group">
+        <label for="title"><b>Title:</b></label>
+        <input type="text" class="form-control" id="title1" value="">
+        <input type="hidden" id="article_id" value="">
+
+      </div>
+      <div class="form-group">
+        <label for="desc"><b>Description:</b></label>
+        <input type="text" class="form-control" id="desc1" value="">
+      </div>
+      <button type="submit" class="btn btn-default submit update">Submit Article</button>
+    </form>
+
+    <script>
+      $(document).ready(function(){
+        $.getJSON("http://localhost:3000/articles", function(data){
+          $.each(data, function(key,value){
+            value.forEach(function(article, index){
+              $("#article_table").append(`
+                  <tr id="article">
+                    <th scope="row">${index + 1}</th>
+                    <td>${article.title}</td>
+                    <td>${article.description}</td>
+                    <td>
+                      <div class="btn-group actionPanel delete edit">
+                        <button type="button" class="btn btn-primary edit-article" data-id="${article.id}">Edit</button>
+                        <button type="button" class="btn btn-primary delete-article" data-id="${article.id}">Delete</button>
+                      </div>
+                    </td>
+                  </tr>
+               `);
+            })
+            $('.delete-article').click(function(){
+              article_id = $(this).data('id')
+              $.ajax({
+                type: 'DELETE',
+                url: "http://localhost:3000/articles/"+article_id,
+                data: { id: article_id }
+              })
+              $(this).parents('#article').remove()
+            });
+
+            $('.edit-article').click(function(){
+              article_id = $(this).data('id')
+              $.ajax({
+                type: 'GET',
+                url: "http://localhost:3000/articles/"+article_id+"/edit",
+                data: { id: article_id },
+                success: function (data){
+                  $('form').find('#title1').val(data.title)
+                  $('form').find('#desc1').val(data.description)
+                  $('form').find('#article_id').val(data.id)
+                }
+              })
+            })
+          })
+        });
+      });
+
+      $('form').on('submit', function(event){  
+        event.preventDefault();
+        title = $('#title1').val()
+        description = $('#desc1').val()
+        data =  {title: title, description: description };
+        $(this).trigger("reset");
+        article_id = $('form').find('#article_id').val()
+        if (article_id != ""){
+          url = "http://localhost:3000/articles/"+article_id
+          type = 'PUT'
+        }
+        else {
+          url = "http://localhost:3000/articles"
+          type = 'POST'
+        }
+
+        $.ajax({
+          type: type,
+          url: url,
+          type: type,
+          data: data, 
+          dataType: 'JSON',
+          error: function (xhr, status) {
+            alert("error");
+          },
+        });
+      })
+    </script>
+  </body>
+</html>
